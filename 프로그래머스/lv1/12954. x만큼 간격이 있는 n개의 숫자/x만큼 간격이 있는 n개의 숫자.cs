@@ -3,7 +3,7 @@ public class Solution {
         long[] answer = new long[n];
         for (int i = 1; i <= n; i++)
         {
-            answer[i-1] = (long)(x*(long)i);
+            answer[i-1] = (long)x*i;
         }
         return answer;
     }
