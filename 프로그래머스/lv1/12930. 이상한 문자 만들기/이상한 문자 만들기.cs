@@ -11,14 +11,7 @@ public class Solution {
             char[] letters = word.ToCharArray();
             for(int i = 0; i < letters.Length; i++)
             {
-                if (i%2==0)
-                {
-                    answer += char.ToUpper(letters[i]);
-                }
-                else
-                {
-                    answer += char.ToLower(letters[i]);
-                }
+                answer += i%2 == 0 ? letters[i].ToString().ToUpper() : letters[i].ToString().ToLower() ;
             }
         }
         return answer;
