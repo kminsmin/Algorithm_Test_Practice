@@ -1,13 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 public class Solution {
     public int solution(int[] number) {
         int answer = 0;
-
         int checkTrio = 0;
-
         int numLength = number.Length;
         
         for(int i = 0; i <= numLength - 3; i++)
