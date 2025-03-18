@@ -13,15 +13,17 @@ namespace Baekjoon
         }
         static int Hash(char[] letters, int count)
         {
-            int hash = 0;
-            int r = 31;
-            int m = 1234567891;
+            ulong hash = 0;
+            ulong r = 1;
+            ulong m = 1234567891;
             for (int i = 0; i < count; i++)
-            {
-                hash += (char.ToUpper(letters[i]) - 64) * (int)Math.Pow(r,i);
+            { 
+                hash += (ulong)(char.ToUpper(letters[i]) - 64) * r;
+                hash %= m;
+                r *= 31;
+                r %= m;
             }
-            if (hash > m) return hash / m;
-            else return hash;
+            return (int)hash;
         }
     }
 }
