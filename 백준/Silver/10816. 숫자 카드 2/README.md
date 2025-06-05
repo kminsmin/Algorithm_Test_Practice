@@ -151,3 +151,263 @@ namespace Baekjoon
     }
 }
 ```
+
+### 3-1 :  이진탐색
+딕셔너리로는 충분하지 않은 것 같아 또 코드를 갈아엎었다. 처음 했던 것처럼 카드를 배열로 받아 정렬하고, 이진탐색을 통해 타깃 넘버를 찾고 주위를 검사해 개수를 세어서 리턴한다. 타깃이 없다면 -1을 리턴한다. 그리고 Linq의 Select구문과 OrderBy구문을 혼합하여 한줄만에 배열을 받아오고 int형으로 바꿔 정렬까지 하는 잡기술도 터득했다. 하지만 이 코드도 시간초과를 피할 순 없었다.
+```cs
+using System;
+using System.Linq;
+
+namespace Baekjoon
+{
+    class Program
+    {
+        static void Main()
+        {
+            int n = int.Parse(Console.ReadLine());
+            int[] deck = Console.ReadLine().Split(' ').Select(x => int.Parse(x)).OrderBy(x => x).ToArray();
+            int m = int.Parse(Console.ReadLine());
+            int[] targets = Console.ReadLine().Split(' ').Select(x => int.Parse(x)).ToArray();
+            int count = BinarySearch(deck, targets[0]);
+            if (count != -1) Console.Write(count.ToString());
+            else Console.Write("0");
+            for (int i = 1; i < m; i++)
+            {
+                Console.Write(" ");
+                count = BinarySearch(deck, targets[i]);
+                if (count != -1) Console.Write(count.ToString());
+                else Console.Write("0");
+            }
+        }
+
+        static int BinarySearch(int[] deck, int num)
+        {
+            int low = 0;
+            int high = deck.Length-1;
+            int idx = -1;
+
+            while(low<=high)
+            {
+                int mid = (low+high)/2;
+
+                if (deck[mid]==num)
+                {
+                    int count = 1;
+                    idx = mid-1;
+                    while (idx>=0&&deck[idx] == deck[mid])
+                    {
+                        count++;
+                        idx--;
+                    }
+                    idx = mid + 1;
+                    while (idx<deck.Length&&deck[idx] == deck[mid])
+                    {
+                        count++;
+                        idx++;
+                    }
+                    return count;
+                }
+                else if (num > deck[mid]) low = mid+1;
+                else if (num < deck[mid]) high = mid-1;
+            }
+
+            return idx;
+        }
+    }
+}
+```
+### 3-2 : StreamWriter, StringBuilder
+문제의 원인은 답을 출력하는 과정에서 무수히 많이 호출되는 Console.Write였다. 이 방식은 매 호출 때마다 Console에 직접 접근하는 방식이라서 성능이 저하된다고 한다. StreamWriter를 사용하여 표준 출력 스트림에 직접 쓰는 것은 버퍼링과 직접적인 스트림 액세스를 통해 효율적인 출력을 제공하기 때문에, StreamWriter를 도입해보았다. 하지만 이 또한 시간초과를 피하지 못해서, StringBuilder 클래스도 사용해보았다. 이는 기존에 '+'연산자를 통해 정답 문자열을 조작하여 새 문자열 객체가 매번 생성되어 메모리 낭비를 초래하던 현상을 막아준다. 하나의 StringBuider 객체에 Append 메서드를 통해 객체를 계속 업데이트 할 수 있기 때문이다. 처음으로 채점 진행률이 63%까지 진행되긴 했다. 하지만!! 이 또한 시간초과를 피하지 못했다.
+```cs
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+
+namespace Baekjoon
+{
+    class Program
+    {
+        static void Main()
+        {
+            using (StreamWriter writer = new StreamWriter(Console.OpenStandardOutput()))
+            {
+                int n = int.Parse(Console.ReadLine());
+                int[] deck = Console.ReadLine().Split(' ').Select(int.Parse).OrderBy(x => x).ToArray();
+                int m = int.Parse(Console.ReadLine());
+                int[] targets = Console.ReadLine().Split(' ').Select(int.Parse).ToArray();
+
+                var sb = new StringBuilder();
+                int count = 0;
+
+                for (int i = 0; i < m; i++)
+                {
+                    count = BinarySearch(deck, targets[i]);
+                    sb.Append(count != -1 ? count.ToString() : "0").Append(' ');
+                }
+
+                writer.WriteLine(sb.ToString().TrimEnd());
+            }
+        }
+
+        static int BinarySearch(int[] deck, int num)
+        {
+            int low = 0;
+            int high = deck.Length - 1;
+            int idx = -1;
+
+            while (low <= high)
+            {
+                int mid = (low + high) / 2;
+
+                if (deck[mid] == num)
+                {
+                    int count = 1;
+                    idx = mid - 1;
+                    while (idx >= 0 && deck[idx] == deck[mid])
+                    {
+                        count++;
+                        idx--;
+                    }
+                    idx = mid + 1;
+                    while (idx < deck.Length && deck[idx] == deck[mid])
+                    {
+                        count++;
+                        idx++;
+                    }
+                    return count;
+                }
+                else if (num > deck[mid]) low = mid + 1;
+                else high = mid - 1;
+            }
+
+            return -1;
+        }
+    }
+}
+
+```
+
+### 3-2 : 이진탐색 업그레이드
+타깃넘버를 찾고 좌우를 선형적으로 전부 탐색하던 기존 방식에서, 타깃 넘버의 맨 왼쪽과 맨 오른쪽을 이진탐색으로 구함으로써 개수를 구하는 방식으로 수정하여 시간 복잡도를 줄였다. 드디어 풀었다.
+```cs
+using System;
+using System.Linq;
+using System.IO;
+using System.Text;
+
+namespace Baekjoon
+{
+    class Program
+    {
+        static void Main()
+        {
+            using (StreamWriter writer = new StreamWriter(Console.OpenStandardOutput()))
+            {
+                int n = int.Parse(Console.ReadLine());
+                int[] deck = Console.ReadLine().Split(' ').Select(int.Parse).OrderBy(x => x).ToArray();
+                int m = int.Parse(Console.ReadLine());
+                int[] targets = Console.ReadLine().Split(' ').Select(int.Parse).ToArray();
+
+                var sb = new StringBuilder();
+                int count = 0;
+
+                for (int i = 0; i < m; i++)
+                {
+                    count = BinarySearch(deck, targets[i]);
+                    sb.Append(count != -1 ? count.ToString() : "0").Append(' ');
+                }
+
+                writer.WriteLine(sb.ToString().TrimEnd());
+            }
+        }
+
+        static int BinarySearch(int[] deck, int num)
+        {
+            int low = 0;
+            int high = deck.Length - 1;
+            int start = -1, end = -1;
+
+            while (low <= high)
+            {
+                int mid = (low + high) / 2;
+
+                if (deck[mid] == num)
+                {
+                    start = mid;
+                    high = mid - 1;
+                }
+                else if (num > deck[mid]) low = mid + 1;
+                else high = mid - 1;
+            }
+            low = 0;
+            high = deck.Length - 1;
+            while (low <= high)
+            {
+                int mid = (low + high) / 2;
+
+                if (deck[mid] == num)
+                {
+                    end = mid;
+                    low = mid + 1;
+                }
+                else if (num > deck[mid]) low = mid + 1;
+                else high = mid - 1;
+            }
+
+            return (start!=-1&&end!=-1)? end-start+1:-1;
+        }
+    }
+}
+
+```
+
+### 쿠키...(딕셔너리의 한)
+2번쨰 풀이법에서 사용했던 딕셔너리 풀이법도 StreamWriter와 StringBuilder를 도입하니 풀리더라...
+```cs
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Baekjoon
+{
+    class Program
+    {
+        static void Main()
+        {
+            using (StreamWriter writer = new StreamWriter(Console.OpenStandardOutput()))
+            {
+                int n = int.Parse(Console.ReadLine());
+                string[] deck = Console.ReadLine().Split(' ');
+                deck = deck.OrderBy(x => x).ToArray();
+                Dictionary<int, int> deckInfo = new Dictionary<int, int>();
+                int temp = 0;
+                foreach (string num in deck)
+                {
+                    temp = int.Parse(num);
+                    if (!deckInfo.ContainsKey(temp)) deckInfo.Add(temp, 1);
+                    else deckInfo[temp] = deckInfo[temp] + 1;
+                }
+                int m = int.Parse(Console.ReadLine());
+                deck = Console.ReadLine().Split(' ');
+                temp = int.Parse(deck[0]);
+                var sb = new StringBuilder();
+                if (deckInfo.ContainsKey(temp))
+                    sb.Append(deckInfo[temp].ToString());
+                else writer.Write("0");
+                for (int i = 1; i < m; i++)
+                {
+                    sb.Append(" ");
+                    temp = int.Parse(deck[i]);
+                    if (deckInfo.ContainsKey(temp))
+                        sb.Append(deckInfo[temp].ToString());
+                    else sb.Append("0");
+                }
+                writer.WriteLine(sb.ToString());
+            }
+        }
+    }
+}
+```
+물론 성능은 이진탐색을 사용한 풀이법이 더 좋다...그래도 억울하다...
